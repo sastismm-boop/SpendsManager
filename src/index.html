@@ -192,7 +192,7 @@
       </div>
     </div>
 
-    <!-- Bottom Half: True Borderless Clean Slice Keypad with Haptic Feedback -->
+    <!-- Bottom Half: True Borderless Clean Slice Keypad with Native Haptics -->
     <div class="w-full max-w-sm mx-auto">
       <div class="grid grid-cols-4 gap-y-3 gap-x-2 text-center select-none">
         <!-- Row 1 -->
@@ -296,11 +296,15 @@
     let currentRange = '7D';
     let targetBalMode = 'UPI';
 
-    // Soft Subtle Haptic Feedback
+    // Native Capacitor Haptics with Web Fallback
     function triggerHaptic() {
-      if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        navigator.vibrate(12); // Clean 12ms subtle micro-tap
-      }
+      try {
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics) {
+          window.Capacitor.Plugins.Haptics.impact({ style: 'LIGHT' });
+        } else if (navigator.vibrate) {
+          navigator.vibrate(25);
+        }
+      } catch (e) {}
     }
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -352,7 +356,7 @@
     }
 
     function pressCalc(val) {
-      triggerHaptic(); // Subtle vibration on keypad tap
+      triggerHaptic();
 
       if (val === 'BACK') {
         if (currentInput.length > 1) {
@@ -387,7 +391,6 @@
         return;
       }
 
-      // Digits 0-9
       if (isNewNumber || currentInput === '0') {
         currentInput = val;
         isNewNumber = false;
