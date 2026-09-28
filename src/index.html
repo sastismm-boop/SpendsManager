@@ -26,21 +26,33 @@
     }
   </script>
   <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
     body {
       background-color: #08090D;
       color: #F3F4F6;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      -webkit-tap-highlight-color: transparent;
       user-select: none;
+      -webkit-user-select: none;
     }
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    .tap-bounce {
-      transition: transform 0.1s ease, background-color 0.1s ease;
+    
+    /* Ultra Butter Tap Keypad */
+    .keypad-btn {
+      touch-action: manipulation;
+      transition: transform 0.08s ease, background-color 0.08s ease;
+      will-change: transform;
     }
-    .tap-bounce:active {
-      transform: scale(0.92);
-      background-color: rgba(255, 255, 255, 0.08);
+    .keypad-btn:active {
+      transform: scale(0.88);
+      background-color: rgba(255, 255, 255, 0.12) !important;
+    }
+    .keypad-op:active {
+      transform: scale(0.88);
+      background-color: rgba(139, 92, 246, 0.4) !important;
     }
   </style>
 </head>
@@ -49,7 +61,6 @@
   <!-- Top Header with Custom Vault Logo -->
   <div class="flex justify-between items-center pt-2 mb-4">
     <div class="flex items-center gap-3">
-      <!-- Custom Obsidian Vault Minimal Logo -->
       <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-600 via-purple-700 to-indigo-900 p-0.5 shadow-lg shadow-purple-950/60 flex items-center justify-center">
         <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
@@ -66,9 +77,8 @@
     </button>
   </div>
 
-  <!-- Wallet & Cash Available Balances (Tap to Edit/Add Funds) -->
+  <!-- Wallet & Cash Available Balances -->
   <div class="grid grid-cols-2 gap-2.5 mb-4">
-    <!-- Online Balance Card -->
     <div onclick="openBalanceModal('UPI')" class="bg-cardDark p-3.5 rounded-2xl border border-violet-500/20 active:scale-[0.97] transition-all">
       <div class="flex justify-between items-center mb-1">
         <span class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">⚡ Online / UPI</span>
@@ -78,7 +88,6 @@
       <p class="text-[9px] text-zinc-500 mt-0.5">Tap to adjust / add</p>
     </div>
 
-    <!-- Cash Balance Card -->
     <div onclick="openBalanceModal('Cash')" class="bg-cardDark p-3.5 rounded-2xl border border-emerald-500/20 active:scale-[0.97] transition-all">
       <div class="flex justify-between items-center mb-1">
         <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">💵 Cash in Hand</span>
@@ -108,7 +117,6 @@
       </div>
     </div>
 
-    <!-- Custom Date Filter -->
     <div id="customDateRow" class="hidden mb-3 grid grid-cols-2 gap-2 text-xs">
       <input type="date" id="customStartDate" onchange="renderChart()" class="bg-surface rounded-xl px-2.5 py-1.5 text-zinc-300 focus:outline-none border border-white/5">
       <input type="date" id="customEndDate" onchange="renderChart()" class="bg-surface rounded-xl px-2.5 py-1.5 text-zinc-300 focus:outline-none border border-white/5">
@@ -131,16 +139,14 @@
       <h2 class="text-xs font-bold text-zinc-500 uppercase tracking-wider">History</h2>
       <button onclick="exportCSV()" class="text-xs text-violet-400 font-semibold active:opacity-70">Export CSV</button>
     </div>
-    <div id="txList" class="space-y-2.5">
-      <!-- Injected via JS -->
-    </div>
+    <div id="txList" class="space-y-2.5"></div>
   </div>
 
   <!-- ================= ADD SPEND BOTTOM SHEET ================= -->
   <div id="addModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex flex-col justify-end">
-    <div class="bg-cardDark rounded-t-[36px] p-6 max-w-md mx-auto w-full border-t border-white/10">
+    <div class="bg-cardDark rounded-t-[36px] p-5 max-w-md mx-auto w-full border-t border-white/10">
       
-      <div class="flex justify-between items-center mb-2">
+      <div class="flex justify-between items-center mb-1">
         <div class="flex items-center gap-2">
           <span class="text-xs font-bold uppercase tracking-wider text-zinc-400">Add Spend</span>
           <span id="activeCategoryTag" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-violet-950/80 text-violet-300 border border-violet-800/40">Food & Dining</span>
@@ -150,7 +156,7 @@
 
       <!-- Display -->
       <div class="py-2 text-right">
-        <div id="calcExpr" class="text-xs text-zinc-500 h-4 font-mono"></div>
+        <div id="calcExpr" class="text-xs text-zinc-500 h-4 font-mono pr-1"></div>
         <div class="flex items-baseline justify-end gap-1">
           <span class="text-2xl font-black text-violet-400">₹</span>
           <input type="text" id="calcDisplay" readonly value="0" class="bg-transparent text-right text-5xl font-black text-white w-full focus:outline-none tracking-tight">
@@ -158,7 +164,7 @@
       </div>
 
       <!-- Payment Mode Toggle -->
-      <div class="grid grid-cols-2 gap-2 mb-3">
+      <div class="grid grid-cols-2 gap-2 mb-2.5">
         <button type="button" id="modeUPI" onclick="setMode('UPI')" class="py-2.5 rounded-2xl text-xs font-bold bg-violet-600/20 text-violet-300 border border-violet-500/50">
           ⚡ UPI / Online
         </button>
@@ -167,38 +173,37 @@
         </button>
       </div>
 
-      <input type="text" id="txNote" placeholder="What was this for? (Optional)" class="w-full bg-surface rounded-xl px-3.5 py-2.5 text-xs text-white mb-3 focus:outline-none focus:ring-1 focus:ring-violet-500 placeholder-zinc-500">
+      <input type="text" id="txNote" placeholder="What was this for? (Optional)" class="w-full bg-surface rounded-xl px-3.5 py-2.5 text-xs text-white mb-2.5 focus:outline-none focus:ring-1 focus:ring-violet-500 placeholder-zinc-500">
 
       <!-- Dynamic Top Chips -->
-      <div class="mb-4">
-        <div class="flex items-center gap-1.5 overflow-x-auto hide-scrollbar py-1" id="frequentChipsContainer">
-        </div>
+      <div class="mb-3">
+        <div class="flex items-center gap-1.5 overflow-x-auto hide-scrollbar py-1" id="frequentChipsContainer"></div>
       </div>
 
-      <!-- Borderless Touch Keypad -->
-      <div class="grid grid-cols-4 gap-2 mb-4 text-center">
-        <button onclick="pressCalc('7')" class="tap-bounce py-3.5 rounded-2xl text-2xl font-semibold text-zinc-100">7</button>
-        <button onclick="pressCalc('8')" class="tap-bounce py-3.5 rounded-2xl text-2xl font-semibold text-zinc-100">8</button>
-        <button onclick="pressCalc('9')" class="tap-bounce py-3.5 rounded-2xl text-2xl font-semibold text-zinc-100">9</button>
-        <button onclick="pressCalc('/')" class="tap-bounce py-3.5 rounded-2xl text-xl font-bold text-violet-400 bg-surface/50">÷</button>
+      <!-- Smooth Touch Numeric Keypad -->
+      <div class="grid grid-cols-4 gap-2 mb-3 text-center">
+        <button type="button" onclick="pressCalc('7')" class="keypad-btn py-3 rounded-2xl text-2xl font-bold text-zinc-100 bg-surface/30">7</button>
+        <button type="button" onclick="pressCalc('8')" class="keypad-btn py-3 rounded-2xl text-2xl font-bold text-zinc-100 bg-surface/30">8</button>
+        <button type="button" onclick="pressCalc('9')" class="keypad-btn py-3 rounded-2xl text-2xl font-bold text-zinc-100 bg-surface/30">9</button>
+        <button type="button" onclick="pressCalc('/')" class="keypad-op py-3 rounded-2xl text-xl font-black text-violet-400 bg-violet-950/20">÷</button>
 
-        <button onclick="pressCalc('4')" class="tap-bounce py-3.5 rounded-2xl text-2xl font-semibold text-zinc-100">4</button>
-        <button onclick="pressCalc('5')" class="tap-bounce py-3.5 rounded-2xl text-2xl font-semibold text-zinc-100">5</button>
-        <button onclick="pressCalc('6')" class="tap-bounce py-3.5 rounded-2xl text-2xl font-semibold text-zinc-100">6</button>
-        <button onclick="pressCalc('*')" class="tap-bounce py-3.5 rounded-2xl text-xl font-bold text-violet-400 bg-surface/50">×</button>
+        <button type="button" onclick="pressCalc('4')" class="keypad-btn py-3 rounded-2xl text-2xl font-bold text-zinc-100 bg-surface/30">4</button>
+        <button type="button" onclick="pressCalc('5')" class="keypad-btn py-3 rounded-2xl text-2xl font-bold text-zinc-100 bg-surface/30">5</button>
+        <button type="button" onclick="pressCalc('6')" class="keypad-btn py-3 rounded-2xl text-2xl font-bold text-zinc-100 bg-surface/30">6</button>
+        <button type="button" onclick="pressCalc('*')" class="keypad-op py-3 rounded-2xl text-xl font-black text-violet-400 bg-violet-950/20">×</button>
 
-        <button onclick="pressCalc('1')" class="tap-bounce py-3.5 rounded-2xl text-2xl font-semibold text-zinc-100">1</button>
-        <button onclick="pressCalc('2')" class="tap-bounce py-3.5 rounded-2xl text-2xl font-semibold text-zinc-100">2</button>
-        <button onclick="pressCalc('3')" class="tap-bounce py-3.5 rounded-2xl text-2xl font-semibold text-zinc-100">3</button>
-        <button onclick="pressCalc('-')" class="tap-bounce py-3.5 rounded-2xl text-xl font-bold text-violet-400 bg-surface/50">−</button>
+        <button type="button" onclick="pressCalc('1')" class="keypad-btn py-3 rounded-2xl text-2xl font-bold text-zinc-100 bg-surface/30">1</button>
+        <button type="button" onclick="pressCalc('2')" class="keypad-btn py-3 rounded-2xl text-2xl font-bold text-zinc-100 bg-surface/30">2</button>
+        <button type="button" onclick="pressCalc('3')" class="keypad-btn py-3 rounded-2xl text-2xl font-bold text-zinc-100 bg-surface/30">3</button>
+        <button type="button" onclick="pressCalc('-')" class="keypad-op py-3 rounded-2xl text-xl font-black text-violet-400 bg-violet-950/20">−</button>
 
-        <button onclick="pressCalc('.')" class="tap-bounce py-3.5 rounded-2xl text-2xl font-bold text-zinc-300">.</button>
-        <button onclick="pressCalc('0')" class="tap-bounce py-3.5 rounded-2xl text-2xl font-semibold text-zinc-100">0</button>
-        <button onclick="pressCalc('BACK')" class="tap-bounce py-3.5 rounded-2xl text-lg font-bold text-zinc-400">⌫</button>
-        <button onclick="pressCalc('+')" class="tap-bounce py-3.5 rounded-2xl text-xl font-bold text-violet-400 bg-surface/50">+</button>
+        <button type="button" onclick="pressCalc('.')" class="keypad-btn py-3 rounded-2xl text-2xl font-bold text-zinc-300 bg-surface/30">.</button>
+        <button type="button" onclick="pressCalc('0')" class="keypad-btn py-3 rounded-2xl text-2xl font-bold text-zinc-100 bg-surface/30">0</button>
+        <button type="button" onclick="pressCalc('BACK')" class="keypad-btn py-3 rounded-2xl text-lg font-bold text-zinc-400 bg-surface/30">⌫</button>
+        <button type="button" onclick="pressCalc('+')" class="keypad-op py-3 rounded-2xl text-xl font-black text-violet-400 bg-violet-950/20">+</button>
       </div>
 
-      <button onclick="saveTransaction()" class="w-full py-4 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-extrabold rounded-2xl text-base shadow-xl shadow-violet-900/50 active:scale-[0.98] transition-transform">
+      <button type="button" onclick="saveTransaction()" class="w-full py-3.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-extrabold rounded-2xl text-base shadow-xl shadow-violet-900/50 active:scale-[0.98] transition-transform">
         Deduct & Save Spend
       </button>
 
@@ -238,8 +243,7 @@
         <button onclick="closeCategorySheet()" class="w-8 h-8 rounded-full bg-surface flex items-center justify-center text-zinc-400">✕</button>
       </div>
       
-      <div id="categoryGrid" class="grid grid-cols-3 gap-2.5 overflow-y-auto hide-scrollbar pb-6">
-      </div>
+      <div id="categoryGrid" class="grid grid-cols-3 gap-2.5 overflow-y-auto hide-scrollbar pb-6"></div>
     </div>
   </div>
 
@@ -265,7 +269,9 @@
     
     let currentMode = 'UPI';
     let selectedCategory = 'Food & Dining';
+    let currentInput = '0';
     let calcExpression = '';
+    let isNewNumber = true;
     let chartInstance = null;
     let currentRange = '7D';
     let targetBalMode = 'UPI';
@@ -281,7 +287,6 @@
       renderCategoryChips();
     }
 
-    // ================= WALLET & BALANCE SYSTEM =================
     function renderBalances() {
       document.getElementById('onlineBalText').innerText = `₹${(wallet.UPI || 0).toLocaleString('en-IN')}`;
       document.getElementById('cashBalText').innerText = `₹${(wallet.Cash || 0).toLocaleString('en-IN')}`;
@@ -313,60 +318,76 @@
       renderBalances();
     }
 
-    // ================= CALCULATOR & KEYPAD =================
-    function pressCalc(val) {
-      const display = document.getElementById('calcDisplay');
-      const expr = document.getElementById('calcExpr');
+    // ================= ZERO-LAG ENGINE =================
+    function updateKeypadUI() {
+      document.getElementById('calcDisplay').value = currentInput;
+      document.getElementById('calcExpr').innerText = calcExpression;
+    }
 
+    function pressCalc(val) {
       if (val === 'BACK') {
-        if (display.value.length > 1) {
-          display.value = display.value.slice(0, -1);
-          calcExpression = calcExpression.slice(0, -1);
+        if (currentInput.length > 1) {
+          currentInput = currentInput.slice(0, -1);
         } else {
-          display.value = '0';
-          calcExpression = '';
+          currentInput = '0';
+          isNewNumber = true;
         }
-        expr.innerText = calcExpression;
+        updateKeypadUI();
         return;
       }
 
       if (['+', '-', '*', '/'].includes(val)) {
-        try {
-          if (calcExpression !== '') {
-            calcExpression = eval(calcExpression).toString();
-          }
-        } catch(e){}
-        calcExpression += val;
-        expr.innerText = calcExpression;
-        display.value = '0';
+        if (calcExpression && !isNewNumber) {
+          try {
+            const evaluated = eval(calcExpression + currentInput);
+            currentInput = Number(evaluated.toFixed(2)).toString();
+          } catch (e) {}
+        }
+        calcExpression = currentInput + ' ' + val + ' ';
+        isNewNumber = true;
+        updateKeypadUI();
         return;
       }
 
-      if (display.value === '0' && val !== '.') {
-        calcExpression = calcExpression.endsWith('+') || calcExpression.endsWith('-') || calcExpression.endsWith('*') || calcExpression.endsWith('/') 
-          ? calcExpression + val : val;
-        display.value = val;
-      } else {
-        calcExpression += val;
-        display.value = display.value + val;
+      if (val === '.') {
+        if (!currentInput.includes('.')) {
+          currentInput = isNewNumber ? '0.' : currentInput + '.';
+          isNewNumber = false;
+        }
+        updateKeypadUI();
+        return;
       }
+
+      // Digits 0-9
+      if (isNewNumber || currentInput === '0') {
+        currentInput = val;
+        isNewNumber = false;
+      } else {
+        if (currentInput.length < 9) { // limit overflow
+          currentInput += val;
+        }
+      }
+      updateKeypadUI();
     }
 
-    function evaluateCalc() {
-      try {
-        if (!calcExpression) return parseFloat(document.getElementById('calcDisplay').value) || 0;
-        const res = eval(calcExpression);
-        return isNaN(res) ? 0 : parseFloat(res.toFixed(2));
-      } catch (e) {
-        return parseFloat(document.getElementById('calcDisplay').value) || 0;
+    function getFinalCalcValue() {
+      if (calcExpression) {
+        try {
+          const res = eval(calcExpression + currentInput);
+          return Math.max(0, Number(res.toFixed(2)));
+        } catch (e) {
+          return parseFloat(currentInput) || 0;
+        }
       }
+      return parseFloat(currentInput) || 0;
     }
 
     function openAddModal() {
       document.getElementById('addModal').classList.remove('hidden');
+      currentInput = '0';
       calcExpression = '';
-      document.getElementById('calcDisplay').value = '0';
-      document.getElementById('calcExpr').innerText = '';
+      isNewNumber = true;
+      updateKeypadUI();
       renderCategoryChips();
     }
 
@@ -434,7 +455,7 @@
     function openCategorySheet() {
       const grid = document.getElementById('categoryGrid');
       grid.innerHTML = CATEGORIES.map(cat => `
-        <button onclick="pickCategory('${cat.name}')" class="flex flex-col items-center justify-center p-3 rounded-2xl bg-surface border ${
+        <button type="button" onclick="pickCategory('${cat.name}')" class="flex flex-col items-center justify-center p-3 rounded-2xl bg-surface border ${
           selectedCategory === cat.name ? 'border-violet-500 bg-violet-950/20' : 'border-transparent'
         } active:scale-95 transition-transform">
           <span class="text-2xl mb-1">${cat.icon}</span>
@@ -448,12 +469,10 @@
       document.getElementById('categorySheet').classList.add('hidden');
     }
 
-    // ================= SAVE SPEND WITH AUTO-DEDUCT =================
     function saveTransaction() {
-      const amount = evaluateCalc();
+      const amount = getFinalCalcValue();
       if (amount <= 0) return alert('Enter a valid amount');
 
-      // Auto Deduct from respective wallet
       wallet[currentMode] = (wallet[currentMode] || 0) - amount;
       localStorage.setItem('vault_balances', JSON.stringify(wallet));
 
@@ -476,7 +495,6 @@
     function deleteTx(id) {
       const target = transactions.find(t => t.id === id);
       if (target) {
-        // Refund amount back to balance upon delete
         wallet[target.mode] = (wallet[target.mode] || 0) + target.amount;
         localStorage.setItem('vault_balances', JSON.stringify(wallet));
       }
