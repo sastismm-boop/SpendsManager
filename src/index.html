@@ -14,11 +14,12 @@
       theme: {
         extend: {
           colors: {
-            bgDark: '#0D0E12',
-            cardDark: '#16181F',
-            cardBorder: '#232634',
-            accentPurple: '#7C3AED',
-            accentPink: '#EC4899',
+            bgDark: '#08090D',
+            cardDark: '#12141C',
+            surface: '#1A1D28',
+            surfaceLight: '#242838',
+            accentViolet: '#8B5CF6',
+            accentEmerald: '#10B981',
           }
         }
       }
@@ -26,7 +27,7 @@
   </script>
   <style>
     body {
-      background-color: #0D0E12;
+      background-color: #08090D;
       color: #F3F4F6;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       -webkit-tap-highlight-color: transparent;
@@ -34,157 +35,298 @@
     }
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .tap-bounce {
+      transition: transform 0.1s ease, background-color 0.1s ease;
+    }
+    .tap-bounce:active {
+      transform: scale(0.92);
+      background-color: rgba(255, 255, 255, 0.08);
+    }
   </style>
 </head>
-<body class="p-4 max-w-md mx-auto pb-24">
+<body class="p-4 max-w-md mx-auto pb-28">
 
-  <!-- Header & Total Spends -->
-  <div class="flex justify-between items-center pt-4 mb-4">
-    <div>
-      <p class="text-xs text-zinc-400 font-medium tracking-wide uppercase">This Month</p>
-      <h1 id="monthTotal" class="text-3xl font-extrabold tracking-tight text-white mt-0.5">₹0</h1>
+  <!-- Top Header with Custom Vault Logo -->
+  <div class="flex justify-between items-center pt-2 mb-4">
+    <div class="flex items-center gap-3">
+      <!-- Custom Obsidian Vault Minimal Logo -->
+      <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-600 via-purple-700 to-indigo-900 p-0.5 shadow-lg shadow-purple-950/60 flex items-center justify-center">
+        <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-lg font-black tracking-tight text-white leading-tight">SpendLog</h1>
+        <p class="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">Self Vault</p>
+      </div>
     </div>
-    <button onclick="openAddModal()" class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-purple-900/40 active:scale-95 transition-transform">
+    
+    <button onclick="openAddModal()" class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-violet-900/40 active:scale-90 transition-transform">
       +
     </button>
   </div>
 
-  <!-- Smooth Monthly Spending Chart -->
-  <div class="bg-cardDark border border-cardBorder rounded-3xl p-4 mb-6 shadow-xl">
-    <div class="flex justify-between items-center mb-2">
-      <span class="text-xs font-semibold text-zinc-400">Spending Trend</span>
-      <span class="text-xs font-medium text-purple-400 bg-purple-950/60 px-2 py-0.5 rounded-full border border-purple-800/40">Last 7 Days</span>
+  <!-- Wallet & Cash Available Balances (Tap to Edit/Add Funds) -->
+  <div class="grid grid-cols-2 gap-2.5 mb-4">
+    <!-- Online Balance Card -->
+    <div onclick="openBalanceModal('UPI')" class="bg-cardDark p-3.5 rounded-2xl border border-violet-500/20 active:scale-[0.97] transition-all">
+      <div class="flex justify-between items-center mb-1">
+        <span class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">⚡ Online / UPI</span>
+        <span class="text-xs text-zinc-600 font-bold">✎</span>
+      </div>
+      <div id="onlineBalText" class="text-lg font-black text-white">₹0</div>
+      <p class="text-[9px] text-zinc-500 mt-0.5">Tap to adjust / add</p>
     </div>
-    <div class="h-32 w-full">
+
+    <!-- Cash Balance Card -->
+    <div onclick="openBalanceModal('Cash')" class="bg-cardDark p-3.5 rounded-2xl border border-emerald-500/20 active:scale-[0.97] transition-all">
+      <div class="flex justify-between items-center mb-1">
+        <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">💵 Cash in Hand</span>
+        <span class="text-xs text-zinc-600 font-bold">✎</span>
+      </div>
+      <div id="cashBalText" class="text-lg font-black text-white">₹0</div>
+      <p class="text-[9px] text-zinc-500 mt-0.5">Tap to adjust / add</p>
+    </div>
+  </div>
+
+  <!-- Total Spend Summary Banner -->
+  <div class="flex justify-between items-center px-1 mb-4">
+    <span class="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">This Month Spent</span>
+    <span id="monthTotal" class="text-lg font-extrabold text-white">₹0</span>
+  </div>
+
+  <!-- Spending Trend Graph Card -->
+  <div class="bg-cardDark rounded-3xl p-4 mb-5 border border-white/5 shadow-2xl">
+    <div class="flex justify-between items-center mb-3">
+      <span class="text-xs font-bold text-zinc-400">Spending Trend</span>
+      <div class="flex bg-surface p-1 rounded-xl gap-1 text-[11px] font-semibold">
+        <button onclick="setTimeRange('7D')" id="btn7D" class="px-2.5 py-1 rounded-lg bg-violet-600 text-white transition-all">7D</button>
+        <button onclick="setTimeRange('1M')" id="btn1M" class="px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition-all">1M</button>
+        <button onclick="setTimeRange('3M')" id="btn3M" class="px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition-all">3M</button>
+        <button onclick="setTimeRange('1Y')" id="btn1Y" class="px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition-all">1Y</button>
+        <button onclick="toggleCustomDate()" id="btnCustom" class="px-2 py-1 rounded-lg text-zinc-400 hover:text-white transition-all">📅</button>
+      </div>
+    </div>
+
+    <!-- Custom Date Filter -->
+    <div id="customDateRow" class="hidden mb-3 grid grid-cols-2 gap-2 text-xs">
+      <input type="date" id="customStartDate" onchange="renderChart()" class="bg-surface rounded-xl px-2.5 py-1.5 text-zinc-300 focus:outline-none border border-white/5">
+      <input type="date" id="customEndDate" onchange="renderChart()" class="bg-surface rounded-xl px-2.5 py-1.5 text-zinc-300 focus:outline-none border border-white/5">
+    </div>
+
+    <div class="h-36 w-full">
       <canvas id="spendChart"></canvas>
     </div>
   </div>
 
   <!-- Search Filter -->
-  <div class="mb-4 relative">
-    <input type="text" id="searchInput" placeholder="Search spends, category, note..." oninput="renderTransactions()" 
-           class="w-full bg-cardDark border border-cardBorder rounded-2xl px-4 py-3 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors">
+  <div class="mb-4">
+    <input type="text" id="searchInput" placeholder="Search spends, notes, categories..." oninput="renderTransactions()" 
+           class="w-full bg-cardDark rounded-2xl px-4 py-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-violet-500 border border-white/5">
   </div>
 
-  <!-- Recent Spends List -->
+  <!-- Recent Transactions Section -->
   <div>
     <div class="flex justify-between items-center mb-3 px-1">
-      <h2 class="text-sm font-semibold text-zinc-400">Recent Spends</h2>
-      <button onclick="exportCSV()" class="text-xs text-purple-400 hover:underline">Export CSV</button>
+      <h2 class="text-xs font-bold text-zinc-500 uppercase tracking-wider">History</h2>
+      <button onclick="exportCSV()" class="text-xs text-violet-400 font-semibold active:opacity-70">Export CSV</button>
     </div>
     <div id="txList" class="space-y-2.5">
-      <!-- Injected by JavaScript -->
+      <!-- Injected via JS -->
     </div>
   </div>
 
-  <!-- Bottom Sheet Add Modal with Calculator -->
-  <div id="addModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex flex-col justify-end">
-    <div class="bg-cardDark border-t border-cardBorder rounded-t-[32px] p-5 max-w-md mx-auto w-full animate-slide-up">
+  <!-- ================= ADD SPEND BOTTOM SHEET ================= -->
+  <div id="addModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex flex-col justify-end">
+    <div class="bg-cardDark rounded-t-[36px] p-6 max-w-md mx-auto w-full border-t border-white/10">
       
-      <div class="flex justify-between items-center mb-3">
-        <span class="text-sm font-semibold text-zinc-400">New Spend</span>
-        <button onclick="closeAddModal()" class="text-zinc-400 text-lg px-2">✕</button>
+      <div class="flex justify-between items-center mb-2">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold uppercase tracking-wider text-zinc-400">Add Spend</span>
+          <span id="activeCategoryTag" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-violet-950/80 text-violet-300 border border-violet-800/40">Food & Dining</span>
+        </div>
+        <button onclick="closeAddModal()" class="w-8 h-8 rounded-full bg-surface flex items-center justify-center text-zinc-400 active:scale-90">✕</button>
       </div>
 
-      <!-- Calculator Display -->
-      <div class="bg-bgDark border border-cardBorder rounded-2xl p-3 mb-3 text-right">
-        <div id="calcExpr" class="text-xs text-zinc-500 h-4"></div>
-        <div class="flex items-center justify-between">
-          <span class="text-xl font-bold text-purple-400">₹</span>
-          <input type="text" id="calcDisplay" readonly value="0" class="bg-transparent text-right text-3xl font-extrabold text-white w-full focus:outline-none">
+      <!-- Display -->
+      <div class="py-2 text-right">
+        <div id="calcExpr" class="text-xs text-zinc-500 h-4 font-mono"></div>
+        <div class="flex items-baseline justify-end gap-1">
+          <span class="text-2xl font-black text-violet-400">₹</span>
+          <input type="text" id="calcDisplay" readonly value="0" class="bg-transparent text-right text-5xl font-black text-white w-full focus:outline-none tracking-tight">
         </div>
       </div>
 
-      <!-- Mode Selector (UPI vs Cash) -->
+      <!-- Payment Mode Toggle -->
       <div class="grid grid-cols-2 gap-2 mb-3">
-        <button type="button" id="modeUPI" onclick="setMode('UPI')" class="py-2 rounded-xl text-xs font-semibold border border-purple-500 bg-purple-900/30 text-purple-300">
+        <button type="button" id="modeUPI" onclick="setMode('UPI')" class="py-2.5 rounded-2xl text-xs font-bold bg-violet-600/20 text-violet-300 border border-violet-500/50">
           ⚡ UPI / Online
         </button>
-        <button type="button" id="modeCash" onclick="setMode('Cash')" class="py-2 rounded-xl text-xs font-semibold border border-cardBorder bg-bgDark text-zinc-400">
+        <button type="button" id="modeCash" onclick="setMode('Cash')" class="py-2.5 rounded-2xl text-xs font-bold bg-surface text-zinc-400 border border-transparent">
           💵 Cash
         </button>
       </div>
 
-      <!-- Optional Note -->
-      <input type="text" id="txNote" placeholder="Add note (optional)" class="w-full bg-bgDark border border-cardBorder rounded-xl px-3 py-2 text-xs text-white mb-3 focus:outline-none focus:border-purple-500">
+      <input type="text" id="txNote" placeholder="What was this for? (Optional)" class="w-full bg-surface rounded-xl px-3.5 py-2.5 text-xs text-white mb-3 focus:outline-none focus:ring-1 focus:ring-violet-500 placeholder-zinc-500">
 
-      <!-- Dynamic Frequent Category Chips -->
-      <div class="mb-3">
-        <div class="text-[11px] font-semibold text-zinc-400 mb-1.5 flex justify-between">
-          <span>Category (Top Used)</span>
-          <select id="moreCategorySelect" onchange="selectDropdownCategory(this.value)" class="bg-bgDark text-zinc-300 border border-cardBorder rounded-lg px-1.5 py-0.5 text-[11px] focus:outline-none">
-            <option value="">More categories...</option>
-          </select>
-        </div>
-        <div id="frequentChips" class="flex gap-1.5 overflow-x-auto hide-scrollbar py-1">
-          <!-- Dynamic Chips injected here -->
+      <!-- Dynamic Top Chips -->
+      <div class="mb-4">
+        <div class="flex items-center gap-1.5 overflow-x-auto hide-scrollbar py-1" id="frequentChipsContainer">
         </div>
       </div>
 
-      <!-- Custom Keypad & Calculator Pad -->
-      <div class="grid grid-cols-4 gap-1.5 mb-3 text-sm font-semibold">
-        <button onclick="pressCalc('7')" class="bg-bgDark py-3 rounded-xl border border-cardBorder active:bg-zinc-800">7</button>
-        <button onclick="pressCalc('8')" class="bg-bgDark py-3 rounded-xl border border-cardBorder active:bg-zinc-800">8</button>
-        <button onclick="pressCalc('9')" class="bg-bgDark py-3 rounded-xl border border-cardBorder active:bg-zinc-800">9</button>
-        <button onclick="pressCalc('/')" class="bg-purple-950/40 text-purple-300 py-3 rounded-xl border border-purple-800/40 active:bg-purple-900">÷</button>
+      <!-- Borderless Touch Keypad -->
+      <div class="grid grid-cols-4 gap-2 mb-4 text-center">
+        <button onclick="pressCalc('7')" class="tap-bounce py-3.5 rounded-2xl text-2xl font-semibold text-zinc-100">7</button>
+        <button onclick="pressCalc('8')" class="tap-bounce py-3.5 rounded-2xl text-2xl font-semibold text-zinc-100">8</button>
+        <button onclick="pressCalc('9')" class="tap-bounce py-3.5 rounded-2xl text-2xl font-semibold text-zinc-100">9</button>
+        <button onclick="pressCalc('/')" class="tap-bounce py-3.5 rounded-2xl text-xl font-bold text-violet-400 bg-surface/50">÷</button>
 
-        <button onclick="pressCalc('4')" class="bg-bgDark py-3 rounded-xl border border-cardBorder active:bg-zinc-800">4</button>
-        <button onclick="pressCalc('5')" class="bg-bgDark py-3 rounded-xl border border-cardBorder active:bg-zinc-800">5</button>
-        <button onclick="pressCalc('6')" class="bg-bgDark py-3 rounded-xl border border-cardBorder active:bg-zinc-800">6</button>
-        <button onclick="pressCalc('*')" class="bg-purple-950/40 text-purple-300 py-3 rounded-xl border border-purple-800/40 active:bg-purple-900">×</button>
+        <button onclick="pressCalc('4')" class="tap-bounce py-3.5 rounded-2xl text-2xl font-semibold text-zinc-100">4</button>
+        <button onclick="pressCalc('5')" class="tap-bounce py-3.5 rounded-2xl text-2xl font-semibold text-zinc-100">5</button>
+        <button onclick="pressCalc('6')" class="tap-bounce py-3.5 rounded-2xl text-2xl font-semibold text-zinc-100">6</button>
+        <button onclick="pressCalc('*')" class="tap-bounce py-3.5 rounded-2xl text-xl font-bold text-violet-400 bg-surface/50">×</button>
 
-        <button onclick="pressCalc('1')" class="bg-bgDark py-3 rounded-xl border border-cardBorder active:bg-zinc-800">1</button>
-        <button onclick="pressCalc('2')" class="bg-bgDark py-3 rounded-xl border border-cardBorder active:bg-zinc-800">2</button>
-        <button onclick="pressCalc('3')" class="bg-bgDark py-3 rounded-xl border border-cardBorder active:bg-zinc-800">3</button>
-        <button onclick="pressCalc('-')" class="bg-purple-950/40 text-purple-300 py-3 rounded-xl border border-purple-800/40 active:bg-purple-900">−</button>
+        <button onclick="pressCalc('1')" class="tap-bounce py-3.5 rounded-2xl text-2xl font-semibold text-zinc-100">1</button>
+        <button onclick="pressCalc('2')" class="tap-bounce py-3.5 rounded-2xl text-2xl font-semibold text-zinc-100">2</button>
+        <button onclick="pressCalc('3')" class="tap-bounce py-3.5 rounded-2xl text-2xl font-semibold text-zinc-100">3</button>
+        <button onclick="pressCalc('-')" class="tap-bounce py-3.5 rounded-2xl text-xl font-bold text-violet-400 bg-surface/50">−</button>
 
-        <button onclick="pressCalc('C')" class="bg-red-950/30 text-red-400 py-3 rounded-xl border border-red-900/40 active:bg-red-900/50">C</button>
-        <button onclick="pressCalc('0')" class="bg-bgDark py-3 rounded-xl border border-cardBorder active:bg-zinc-800">0</button>
-        <button onclick="pressCalc('.')" class="bg-bgDark py-3 rounded-xl border border-cardBorder active:bg-zinc-800">.</button>
-        <button onclick="pressCalc('+')" class="bg-purple-950/40 text-purple-300 py-3 rounded-xl border border-purple-800/40 active:bg-purple-900">+</button>
+        <button onclick="pressCalc('.')" class="tap-bounce py-3.5 rounded-2xl text-2xl font-bold text-zinc-300">.</button>
+        <button onclick="pressCalc('0')" class="tap-bounce py-3.5 rounded-2xl text-2xl font-semibold text-zinc-100">0</button>
+        <button onclick="pressCalc('BACK')" class="tap-bounce py-3.5 rounded-2xl text-lg font-bold text-zinc-400">⌫</button>
+        <button onclick="pressCalc('+')" class="tap-bounce py-3.5 rounded-2xl text-xl font-bold text-violet-400 bg-surface/50">+</button>
       </div>
 
-      <!-- Save Button -->
-      <button onclick="saveTransaction()" class="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-2xl shadow-lg shadow-purple-900/50 active:scale-[0.98] transition-transform">
-        Save Spend
+      <button onclick="saveTransaction()" class="w-full py-4 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-extrabold rounded-2xl text-base shadow-xl shadow-violet-900/50 active:scale-[0.98] transition-transform">
+        Deduct & Save Spend
       </button>
 
     </div>
   </div>
 
+  <!-- ================= UPDATE WALLET / CASH MODAL ================= -->
+  <div id="balanceModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex flex-col justify-end">
+    <div class="bg-cardDark rounded-t-[36px] p-6 max-w-md mx-auto w-full border-t border-white/10">
+      <div class="flex justify-between items-center mb-4">
+        <h3 id="balanceModalTitle" class="text-sm font-bold text-white uppercase tracking-wider">Update Balance</h3>
+        <button onclick="closeBalanceModal()" class="w-8 h-8 rounded-full bg-surface flex items-center justify-center text-zinc-400">✕</button>
+      </div>
+      
+      <p class="text-xs text-zinc-400 mb-2">Set current total or add amount to balance:</p>
+      <div class="flex items-center bg-surface rounded-2xl px-4 py-3 mb-4 border border-white/5">
+        <span class="text-xl font-bold text-violet-400 mr-2">₹</span>
+        <input type="number" id="balanceInput" placeholder="0" class="bg-transparent text-2xl font-extrabold text-white w-full focus:outline-none">
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="applyBalanceAction('set')" class="py-3 bg-surface rounded-xl text-xs font-bold text-zinc-200 border border-white/5 active:scale-95">
+          Set Exact Amount
+        </button>
+        <button onclick="applyBalanceAction('add')" class="py-3 bg-violet-600 rounded-xl text-xs font-bold text-white shadow-lg shadow-violet-900/40 active:scale-95">
+          + Add to Current
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= CATEGORY SHEET ================= -->
+  <div id="categorySheet" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex flex-col justify-end">
+    <div class="bg-cardDark rounded-t-[36px] p-6 max-w-md mx-auto w-full border-t border-white/10 max-h-[80vh] flex flex-col">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-sm font-bold text-white uppercase tracking-wider">Select Category</h3>
+        <button onclick="closeCategorySheet()" class="w-8 h-8 rounded-full bg-surface flex items-center justify-center text-zinc-400">✕</button>
+      </div>
+      
+      <div id="categoryGrid" class="grid grid-cols-3 gap-2.5 overflow-y-auto hide-scrollbar pb-6">
+      </div>
+    </div>
+  </div>
+
   <script>
-    const ALL_CATEGORIES = [
-      "Food & Dining", "Groceries", "Shopping", "Transport", "Personal", 
-      "Recharges & Bills", "Entertainment", "Fitness", "Services", "Medical", 
-      "Travel", "Transfer", "Miscellaneous"
+    const CATEGORIES = [
+      { name: "Food & Dining", icon: "🍔" },
+      { name: "Groceries", icon: "🛒" },
+      { name: "Shopping", icon: "🛍️" },
+      { name: "Transport", icon: "⛽" },
+      { name: "Personal", icon: "👤" },
+      { name: "Bills & Recharges", icon: "📱" },
+      { name: "Entertainment", icon: "🎬" },
+      { name: "Fitness & Gym", icon: "🏋️" },
+      { name: "Services", icon: "🧰" },
+      { name: "Medical", icon: "💊" },
+      { name: "Travel", icon: "✈️" },
+      { name: "Transfer", icon: "🔁" },
+      { name: "Miscellaneous", icon: "📦" }
     ];
 
     let transactions = JSON.parse(localStorage.getItem('spends_data') || '[]');
+    let wallet = JSON.parse(localStorage.getItem('vault_balances') || '{"UPI": 0, "Cash": 0}');
+    
     let currentMode = 'UPI';
     let selectedCategory = 'Food & Dining';
     let calcExpression = '';
     let chartInstance = null;
+    let currentRange = '7D';
+    let targetBalMode = 'UPI';
 
     window.addEventListener('DOMContentLoaded', () => {
       renderAll();
-      setupDropdown();
     });
 
     function renderAll() {
+      renderBalances();
       renderTransactions();
       renderChart();
-      updateFrequentChips();
+      renderCategoryChips();
     }
 
-    // Calculator Functions
+    // ================= WALLET & BALANCE SYSTEM =================
+    function renderBalances() {
+      document.getElementById('onlineBalText').innerText = `₹${(wallet.UPI || 0).toLocaleString('en-IN')}`;
+      document.getElementById('cashBalText').innerText = `₹${(wallet.Cash || 0).toLocaleString('en-IN')}`;
+    }
+
+    function openBalanceModal(mode) {
+      targetBalMode = mode;
+      document.getElementById('balanceModalTitle').innerText = mode === 'UPI' ? 'Update UPI / Bank Balance' : 'Update Cash in Hand';
+      document.getElementById('balanceInput').value = '';
+      document.getElementById('balanceModal').classList.remove('hidden');
+    }
+
+    function closeBalanceModal() {
+      document.getElementById('balanceModal').classList.add('hidden');
+    }
+
+    function applyBalanceAction(action) {
+      const val = parseFloat(document.getElementById('balanceInput').value) || 0;
+      if (val < 0) return alert('Enter a valid amount');
+
+      if (action === 'set') {
+        wallet[targetBalMode] = val;
+      } else if (action === 'add') {
+        wallet[targetBalMode] = (wallet[targetBalMode] || 0) + val;
+      }
+
+      localStorage.setItem('vault_balances', JSON.stringify(wallet));
+      closeBalanceModal();
+      renderBalances();
+    }
+
+    // ================= CALCULATOR & KEYPAD =================
     function pressCalc(val) {
       const display = document.getElementById('calcDisplay');
       const expr = document.getElementById('calcExpr');
 
-      if (val === 'C') {
-        calcExpression = '';
-        display.value = '0';
-        expr.innerText = '';
+      if (val === 'BACK') {
+        if (display.value.length > 1) {
+          display.value = display.value.slice(0, -1);
+          calcExpression = calcExpression.slice(0, -1);
+        } else {
+          display.value = '0';
+          calcExpression = '';
+        }
+        expr.innerText = calcExpression;
         return;
       }
 
@@ -222,8 +364,10 @@
 
     function openAddModal() {
       document.getElementById('addModal').classList.remove('hidden');
-      pressCalc('C');
-      updateFrequentChips();
+      calcExpression = '';
+      document.getElementById('calcDisplay').value = '0';
+      document.getElementById('calcExpr').innerText = '';
+      renderCategoryChips();
     }
 
     function closeAddModal() {
@@ -232,67 +376,86 @@
 
     function setMode(mode) {
       currentMode = mode;
-      const upiBtn = document.getElementById('modeUPI');
-      const cashBtn = document.getElementById('modeCash');
+      const upi = document.getElementById('modeUPI');
+      const cash = document.getElementById('modeCash');
       if (mode === 'UPI') {
-        upiBtn.className = "py-2 rounded-xl text-xs font-semibold border border-purple-500 bg-purple-900/30 text-purple-300";
-        cashBtn.className = "py-2 rounded-xl text-xs font-semibold border border-cardBorder bg-bgDark text-zinc-400";
+        upi.className = "py-2.5 rounded-2xl text-xs font-bold bg-violet-600/20 text-violet-300 border border-violet-500/50";
+        cash.className = "py-2.5 rounded-2xl text-xs font-bold bg-surface text-zinc-400 border border-transparent";
       } else {
-        cashBtn.className = "py-2 rounded-xl text-xs font-semibold border border-purple-500 bg-purple-900/30 text-purple-300";
-        upiBtn.className = "py-2 rounded-xl text-xs font-semibold border border-cardBorder bg-bgDark text-zinc-400";
+        cash.className = "py-2.5 rounded-2xl text-xs font-bold bg-violet-600/20 text-violet-300 border border-violet-500/50";
+        upi.className = "py-2.5 rounded-2xl text-xs font-bold bg-surface text-zinc-400 border border-transparent";
       }
     }
 
-    // Dynamic Top Frequent Categories
     function getTopCategories() {
       const counts = {};
-      ALL_CATEGORIES.forEach(c => counts[c] = 0);
+      CATEGORIES.forEach(c => counts[c.name] = 0);
       transactions.forEach(t => { if (counts[t.category] !== undefined) counts[t.category]++; });
-      return [...ALL_CATEGORIES].sort((a, b) => counts[b] - counts[a]).slice(0, 5);
+      return [...CATEGORIES].sort((a, b) => counts[b.name] - counts[a.name]);
     }
 
-    function updateFrequentChips() {
-      const container = document.getElementById('frequentChips');
-      const top5 = getTopCategories();
-      if (!top5.includes(selectedCategory)) {
-        top5.unshift(selectedCategory);
+    function renderCategoryChips() {
+      const container = document.getElementById('frequentChipsContainer');
+      const sorted = getTopCategories();
+      const top4 = sorted.slice(0, 4);
+
+      if (!top4.find(c => c.name === selectedCategory)) {
+        const found = CATEGORIES.find(c => c.name === selectedCategory);
+        if (found) top4.unshift(found);
       }
-      container.innerHTML = top5.map(cat => `
-        <button type="button" onclick="selectChip('${cat}')" 
-          class="px-3 py-1.5 rounded-xl text-xs whitespace-nowrap border transition-all ${
-            selectedCategory === cat 
-            ? 'bg-purple-600 text-white border-purple-500 shadow-md shadow-purple-900/40 font-semibold' 
-            : 'bg-bgDark text-zinc-400 border-cardBorder'
+
+      let html = top4.map(cat => `
+        <button type="button" onclick="pickCategory('${cat.name}')" 
+          class="px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+            selectedCategory === cat.name 
+            ? 'bg-violet-600 text-white shadow-md shadow-violet-900/50' 
+            : 'bg-surface text-zinc-400'
           }">
-          ${cat}
+          ${cat.icon} ${cat.name}
         </button>
       `).join('');
+
+      html += `
+        <button type="button" onclick="openCategorySheet()" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-surface text-violet-400 whitespace-nowrap active:scale-95">
+          + All
+        </button>
+      `;
+
+      container.innerHTML = html;
+      document.getElementById('activeCategoryTag').innerText = selectedCategory;
     }
 
-    function selectChip(cat) {
-      selectedCategory = cat;
-      updateFrequentChips();
+    function pickCategory(name) {
+      selectedCategory = name;
+      renderCategoryChips();
+      closeCategorySheet();
     }
 
-    function setupDropdown() {
-      const select = document.getElementById('moreCategorySelect');
-      ALL_CATEGORIES.forEach(cat => {
-        const opt = document.createElement('option');
-        opt.value = cat;
-        opt.innerText = cat;
-        select.appendChild(opt);
-      });
+    function openCategorySheet() {
+      const grid = document.getElementById('categoryGrid');
+      grid.innerHTML = CATEGORIES.map(cat => `
+        <button onclick="pickCategory('${cat.name}')" class="flex flex-col items-center justify-center p-3 rounded-2xl bg-surface border ${
+          selectedCategory === cat.name ? 'border-violet-500 bg-violet-950/20' : 'border-transparent'
+        } active:scale-95 transition-transform">
+          <span class="text-2xl mb-1">${cat.icon}</span>
+          <span class="text-[11px] font-medium text-zinc-300 text-center leading-tight">${cat.name}</span>
+        </button>
+      `).join('');
+      document.getElementById('categorySheet').classList.remove('hidden');
     }
 
-    function selectDropdownCategory(val) {
-      if (!val) return;
-      selectedCategory = val;
-      updateFrequentChips();
+    function closeCategorySheet() {
+      document.getElementById('categorySheet').classList.add('hidden');
     }
 
+    // ================= SAVE SPEND WITH AUTO-DEDUCT =================
     function saveTransaction() {
       const amount = evaluateCalc();
-      if (amount <= 0) return alert('Please enter a valid amount');
+      if (amount <= 0) return alert('Enter a valid amount');
+
+      // Auto Deduct from respective wallet
+      wallet[currentMode] = (wallet[currentMode] || 0) - amount;
+      localStorage.setItem('vault_balances', JSON.stringify(wallet));
 
       const tx = {
         id: Date.now().toString(),
@@ -311,6 +474,12 @@
     }
 
     function deleteTx(id) {
+      const target = transactions.find(t => t.id === id);
+      if (target) {
+        // Refund amount back to balance upon delete
+        wallet[target.mode] = (wallet[target.mode] || 0) + target.amount;
+        localStorage.setItem('vault_balances', JSON.stringify(wallet));
+      }
       transactions = transactions.filter(t => t.id !== id);
       localStorage.setItem('spends_data', JSON.stringify(transactions));
       renderAll();
@@ -336,26 +505,27 @@
       document.getElementById('monthTotal').innerText = `₹${currentMonthTotal.toLocaleString('en-IN')}`;
 
       if (filtered.length === 0) {
-        list.innerHTML = `<div class="text-center py-8 text-zinc-500 text-xs">No transactions found</div>`;
+        list.innerHTML = `<div class="text-center py-8 text-zinc-600 text-xs">No spends found</div>`;
         return;
       }
 
       list.innerHTML = filtered.map(t => {
         const d = new Date(t.timestamp);
         const dateStr = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+        const catObj = CATEGORIES.find(c => c.name === t.category) || { icon: "💰" };
         return `
-          <div class="bg-cardDark border border-cardBorder rounded-2xl p-3 flex justify-between items-center">
+          <div class="bg-cardDark rounded-2xl p-3.5 flex justify-between items-center border border-white/5">
             <div class="flex items-center space-x-3">
-              <div class="w-9 h-9 rounded-xl bg-purple-950/40 border border-purple-800/40 flex items-center justify-center text-xs text-purple-300 font-bold">
-                ${t.category.charAt(0)}
+              <div class="w-10 h-10 rounded-2xl bg-surface flex items-center justify-center text-lg">
+                ${catObj.icon}
               </div>
               <div>
-                <p class="text-xs font-semibold text-white">${t.note}</p>
-                <p class="text-[10px] text-zinc-400">${dateStr} • <span class="${t.mode === 'UPI' ? 'text-indigo-400' : 'text-emerald-400'}">${t.mode}</span> • ${t.category}</p>
+                <p class="text-xs font-bold text-white">${t.note}</p>
+                <p class="text-[10px] text-zinc-400 font-medium">${dateStr} • <span class="${t.mode === 'UPI' ? 'text-indigo-400' : 'text-emerald-400'} font-semibold">${t.mode}</span> • ${t.category}</p>
               </div>
             </div>
-            <div class="flex items-center space-x-2">
-              <span class="text-sm font-bold text-white">₹${t.amount.toLocaleString('en-IN')}</span>
+            <div class="flex items-center space-x-2.5">
+              <span class="text-sm font-extrabold text-white">−₹${t.amount.toLocaleString('en-IN')}</span>
               <button onclick="deleteTx('${t.id}')" class="text-zinc-500 hover:text-red-400 text-xs px-1">✕</button>
             </div>
           </div>
@@ -363,21 +533,84 @@
       }).join('');
     }
 
+    function setTimeRange(range) {
+      currentRange = range;
+      ['7D', '1M', '3M', '1Y'].forEach(r => {
+        const el = document.getElementById('btn' + r);
+        if (r === range) {
+          el.className = "px-2.5 py-1 rounded-lg bg-violet-600 text-white transition-all";
+        } else {
+          el.className = "px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition-all";
+        }
+      });
+      document.getElementById('customDateRow').classList.add('hidden');
+      renderChart();
+    }
+
+    function toggleCustomDate() {
+      const row = document.getElementById('customDateRow');
+      row.classList.toggle('hidden');
+      if (!row.classList.contains('hidden')) {
+        currentRange = 'CUSTOM';
+        ['7D', '1M', '3M', '1Y'].forEach(r => {
+          document.getElementById('btn' + r).className = "px-2.5 py-1 rounded-lg text-zinc-400 transition-all";
+        });
+      }
+    }
+
     function renderChart() {
       const ctx = document.getElementById('spendChart').getContext('2d');
-      const days = [];
-      const totals = [];
+      let labels = [];
+      let totals = [];
+      let numPoints = 7;
+      let groupByMonth = false;
 
-      for (let i = 6; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const dayStr = d.toISOString().split('T')[0];
-        days.push(d.toLocaleDateString('en-IN', { weekday: 'short' }));
-        
-        const sum = transactions
-          .filter(t => t.timestamp.startsWith(dayStr))
-          .reduce((acc, t) => acc + t.amount, 0);
-        totals.push(sum);
+      if (currentRange === '7D') numPoints = 7;
+      else if (currentRange === '1M') numPoints = 30;
+      else if (currentRange === '3M') numPoints = 90;
+      else if (currentRange === '1Y') groupByMonth = true;
+
+      if (groupByMonth) {
+        for (let i = 11; i >= 0; i--) {
+          const d = new Date();
+          d.setMonth(d.getMonth() - i);
+          const m = d.getMonth();
+          const y = d.getFullYear();
+          labels.push(d.toLocaleDateString('en-IN', { month: 'short' }));
+          const sum = transactions
+            .filter(t => {
+              const td = new Date(t.timestamp);
+              return td.getMonth() === m && td.getFullYear() === y;
+            })
+            .reduce((acc, t) => acc + t.amount, 0);
+          totals.push(sum);
+        }
+      } else if (currentRange === 'CUSTOM') {
+        const startVal = document.getElementById('customStartDate').value;
+        const endVal = document.getElementById('customEndDate').value;
+        if (startVal && endVal) {
+          let cur = new Date(startVal);
+          const end = new Date(endVal);
+          while (cur <= end) {
+            const dateStr = cur.toISOString().split('T')[0];
+            labels.push(cur.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }));
+            const sum = transactions.filter(t => t.timestamp.startsWith(dateStr)).reduce((a, b) => a + b.amount, 0);
+            totals.push(sum);
+            cur.setDate(cur.getDate() + 1);
+          }
+        }
+      } else {
+        const step = currentRange === '3M' ? 3 : 1;
+        for (let i = numPoints - 1; i >= 0; i -= step) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          const dateStr = d.toISOString().split('T')[0];
+          labels.push(d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }));
+          const sum = transactions
+            .filter(t => t.timestamp.startsWith(dateStr))
+            .reduce((acc, t) => acc + t.amount, 0);
+          totals.push(sum);
+        }
       }
 
       if (chartInstance) chartInstance.destroy();
@@ -385,16 +618,16 @@
       chartInstance = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: days,
+          labels: labels,
           datasets: [{
             data: totals,
-            borderColor: '#A855F7',
+            borderColor: '#8B5CF6',
             borderWidth: 2.5,
             tension: 0.4,
             fill: true,
-            backgroundColor: 'rgba(168, 85, 247, 0.08)',
-            pointBackgroundColor: '#A855F7',
-            pointRadius: 3
+            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+            pointBackgroundColor: '#8B5CF6',
+            pointRadius: labels.length > 15 ? 0 : 3
           }]
         },
         options: {
@@ -402,7 +635,7 @@
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
-            x: { grid: { display: false }, ticks: { color: '#71717A', font: { size: 10 } } },
+            x: { grid: { display: false }, ticks: { color: '#71717A', font: { size: 9 }, maxTicksLimit: 7 } },
             y: { display: false }
           }
         }
@@ -419,7 +652,7 @@
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Spends_Backup_${new Date().toISOString().split('T')[0]}.csv`;
+      a.download = `Spends_Export_${new Date().toISOString().split('T')[0]}.csv`;
       a.click();
     }
   </script>
