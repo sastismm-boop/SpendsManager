@@ -35,28 +35,25 @@ jobs:
           npx cap add android || true
           npx cap sync android
 
-      - name: Generate Custom App Launcher Icon
+      - name: Generate Custom Launcher Icon
         run: |
-          sudo apt-get install -y imagemagick librsvg2-bin
-          cat << 'EOF' > icon.svg
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-            <rect width="512" height="512" rx="128" fill="#090A0F"/>
-            <defs>
-              <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#8B5CF6"/>
-                <stop offset="50%" stop-color="#6D28D9"/>
-                <stop offset="100%" stop-color="#312E81"/>
-              </linearGradient>
-            </defs>
-            <rect x="36" y="36" width="440" height="440" rx="104" fill="url(#grad)"/>
-            <path d="M256 110 L130 180 L256 250 L382 180 Z" fill="#FFFFFF" fill-opacity="0.95"/>
-            <path d="M130 250 L256 320 L382 250" stroke="#FFFFFF" stroke-width="26" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            <path d="M130 320 L256 390 L382 320" stroke="#FFFFFF" stroke-width="26" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-          </svg>
-          EOF
-          rsvg-convert -w 512 -h 512 icon.svg -o icon.png
-          
-          # Replace icons across Android mipmap density folders
+          python3 -c "
+          from PIL import Image, ImageDraw
+
+          size = (512, 512)
+          img = Image.new('RGBA', size, (9, 10, 15, 255))
+          draw = ImageDraw.Draw(img)
+
+          # Draw layered neon/violet vault logo
+          draw.rounded_rectangle([32, 32, 480, 480], radius=110, fill=(124, 58, 237, 255))
+          draw.polygon([(256, 110), (130, 185), (256, 260), (382, 185)], fill=(255, 255, 255, 255))
+          draw.line([(130, 255), (256, 325), (382, 255)], fill=(255, 255, 255, 255), width=24)
+          draw.line([(130, 325), (256, 395), (382, 325)], fill=(255, 255, 255, 255), width=24)
+
+          img.save('icon.png')
+          "
+
+          # Inject into all mipmap density folders
           for dir in android/app/src/main/res/mipmap*; do
             if [ -d "$dir" ]; then
               cp icon.png "$dir/ic_launcher.png"
