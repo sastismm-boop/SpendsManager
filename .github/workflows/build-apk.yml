@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build and Release Android APK
 
 on:
   push:
@@ -34,6 +34,10 @@ jobs:
         run: |
           npx cap add android || true
           npx cap sync android
+
+      - name: Grant Android Vibrate Permission
+        run: |
+          sed -i '/<application/i <uses-permission android:name="android.permission.VIBRATE" />' android/app/src/main/AndroidManifest.xml
 
       - name: Apply Custom Vault Icon
         run: |
@@ -77,11 +81,22 @@ jobs:
           chmod +x ./gradlew
           ./gradlew assembleDebug --stacktrace
 
-      - name: Rename APK
+      - name: Prepare APK File
         run: |
           cp android/app/build/outputs/apk/debug/app-debug.apk SpendLog.apk
 
-      - name: Upload APK to Artifacts
+      - name: Create or Update GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          gh release delete v1.0.0 --yes || true
+          git tag -d v1.0.0 || true
+          git push origin :refs/tags/v1.0.0 || true
+          gh release create v1.0.0 SpendLog.apk --title "SpendLog v1.0.0" --notes "Direct installable APK with native haptics"
+
+      - name: Fallback Artifact
         uses: actions/upload-artifact@v4
         with:
           name: SpendLog-APK
