@@ -1,9 +1,12 @@
-name: Build Android APK
+name: Build and Release Direct APK
 
 on:
   push:
     branches: [ main, master ]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -38,8 +41,23 @@ jobs:
           chmod +x ./gradlew
           ./gradlew assembleDebug --stacktrace
 
-      - name: Upload APK Artifact
+      - name: Rename APK for Easy Install
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk SpendLog.apk
+
+      - name: Upload to GitHub Release (Direct Download & Install)
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/heads/')
+        with:
+          tag_name: latest-build
+          name: "SpendLog Latest Release"
+          body: "Direct installable APK without zip extraction. Download SpendLog.apk directly to phone."
+          files: SpendLog.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fallback Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SpendLog-Debug-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: SpendLog-Direct
+          path: SpendLog.apk
