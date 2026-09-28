@@ -1,0 +1,6 @@
+{
+  "appId": "com.spends.manager",
+  "appName": "SpendLog",
+  "webDir": "src",
+  "bundledWebRuntime": false
+}
