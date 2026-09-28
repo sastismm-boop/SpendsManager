@@ -302,7 +302,7 @@
         if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics) {
           window.Capacitor.Plugins.Haptics.impact({ style: 'LIGHT' });
         } else if (navigator.vibrate) {
-          navigator.vibrate(25);
+          navigator.vibrate(8);
         }
       } catch (e) {}
     }
