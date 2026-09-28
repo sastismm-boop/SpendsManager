@@ -174,7 +174,7 @@
 
     <!-- Center Display Area (Pure Minimalist Giant Amount) -->
     <div class="flex flex-col items-center justify-center my-auto py-2">
-      <div id="calcExpr" class="text-sm font-semibold text-zinc-500 h-6 mb-1 tracking-wider"></div>
+      <div id="calcExpr" class="text-sm font-semibold text-zinc-500 h-6 mb-1 tracking-wider font-mono"></div>
       <div class="flex items-center justify-center">
         <span class="text-4xl md:text-5xl font-black text-violet-400 mr-1.5">₹</span>
         <span id="calcDisplay" class="text-6xl md:text-7xl font-black text-white tracking-tight">0</span>
@@ -192,7 +192,7 @@
       </div>
     </div>
 
-    <!-- Bottom Half: True Borderless Clean Slice Keypad -->
+    <!-- Bottom Half: True Borderless Clean Slice Keypad with Haptic Feedback -->
     <div class="w-full max-w-sm mx-auto">
       <div class="grid grid-cols-4 gap-y-3 gap-x-2 text-center select-none">
         <!-- Row 1 -->
@@ -296,6 +296,13 @@
     let currentRange = '7D';
     let targetBalMode = 'UPI';
 
+    // Soft Subtle Haptic Feedback
+    function triggerHaptic() {
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate(12); // Clean 12ms subtle micro-tap
+      }
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       renderAll();
     });
@@ -338,13 +345,15 @@
       renderBalances();
     }
 
-    // ================= SLICE KEYPAD LOGIC =================
+    // ================= SLICE KEYPAD LOGIC WITH HAPTIC =================
     function updateKeypadUI() {
       document.getElementById('calcDisplay').innerText = currentInput;
       document.getElementById('calcExpr').innerText = calcExpression;
     }
 
     function pressCalc(val) {
+      triggerHaptic(); // Subtle vibration on keypad tap
+
       if (val === 'BACK') {
         if (currentInput.length > 1) {
           currentInput = currentInput.slice(0, -1);
@@ -417,6 +426,7 @@
     }
 
     function setMode(mode) {
+      triggerHaptic();
       currentMode = mode;
       const upi = document.getElementById('modeUPI');
       const cash = document.getElementById('modeCash');
@@ -467,6 +477,7 @@
     }
 
     function pickCategory(name) {
+      triggerHaptic();
       selectedCategory = name;
       renderCategoryChips();
       closeCategorySheet();
