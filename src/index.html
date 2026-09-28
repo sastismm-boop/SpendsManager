@@ -39,25 +39,34 @@
     }
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    
-    /* Ultra Butter Tap Keypad */
-    .keypad-btn {
+
+    /* Slice App Borderless Keypad Styling */
+    .slice-key {
       touch-action: manipulation;
+      background: transparent;
+      border: none;
+      outline: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
       transition: transform 0.08s ease, background-color 0.08s ease;
       will-change: transform;
+      border-radius: 9999px;
     }
-    .keypad-btn:active {
-      transform: scale(0.88);
-      background-color: rgba(255, 255, 255, 0.12) !important;
+    .slice-key:active {
+      transform: scale(0.86);
+      background-color: rgba(255, 255, 255, 0.07);
     }
-    .keypad-op:active {
-      transform: scale(0.88);
-      background-color: rgba(139, 92, 246, 0.4) !important;
+    .slice-operator:active {
+      transform: scale(0.86);
+      background-color: rgba(139, 92, 246, 0.2);
     }
   </style>
 </head>
 <body class="p-4 max-w-md mx-auto pb-28">
 
+  <!-- ================= MAIN DASHBOARD ================= -->
   <!-- Top Header with Custom Vault Logo -->
   <div class="flex justify-between items-center pt-2 mb-4">
     <div class="flex items-center gap-3">
@@ -72,6 +81,7 @@
       </div>
     </div>
     
+    <!-- Open Fullscreen Slice Keypad Button -->
     <button onclick="openAddModal()" class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-violet-900/40 active:scale-90 transition-transform">
       +
     </button>
@@ -79,7 +89,7 @@
 
   <!-- Wallet & Cash Available Balances -->
   <div class="grid grid-cols-2 gap-2.5 mb-4">
-    <div onclick="openBalanceModal('UPI')" class="bg-cardDark p-3.5 rounded-2xl border border-violet-500/20 active:scale-[0.97] transition-all">
+    <div onclick="openBalanceModal('UPI')" class="bg-cardDark p-3.5 rounded-2xl border border-violet-500/20 active:scale-[0.97] transition-all cursor-pointer">
       <div class="flex justify-between items-center mb-1">
         <span class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">⚡ Online / UPI</span>
         <span class="text-xs text-zinc-600 font-bold">✎</span>
@@ -88,7 +98,7 @@
       <p class="text-[9px] text-zinc-500 mt-0.5">Tap to adjust / add</p>
     </div>
 
-    <div onclick="openBalanceModal('Cash')" class="bg-cardDark p-3.5 rounded-2xl border border-emerald-500/20 active:scale-[0.97] transition-all">
+    <div onclick="openBalanceModal('Cash')" class="bg-cardDark p-3.5 rounded-2xl border border-emerald-500/20 active:scale-[0.97] transition-all cursor-pointer">
       <div class="flex justify-between items-center mb-1">
         <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">💵 Cash in Hand</span>
         <span class="text-xs text-zinc-600 font-bold">✎</span>
@@ -142,72 +152,82 @@
     <div id="txList" class="space-y-2.5"></div>
   </div>
 
-  <!-- ================= ADD SPEND BOTTOM SHEET ================= -->
-  <div id="addModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex flex-col justify-end">
-    <div class="bg-cardDark rounded-t-[36px] p-5 max-w-md mx-auto w-full border-t border-white/10">
-      
-      <div class="flex justify-between items-center mb-1">
-        <div class="flex items-center gap-2">
-          <span class="text-xs font-bold uppercase tracking-wider text-zinc-400">Add Spend</span>
-          <span id="activeCategoryTag" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-violet-950/80 text-violet-300 border border-violet-800/40">Food & Dining</span>
-        </div>
-        <button onclick="closeAddModal()" class="w-8 h-8 rounded-full bg-surface flex items-center justify-center text-zinc-400 active:scale-90">✕</button>
-      </div>
+  <!-- ================= FULLSCREEN SLICE-STYLE SPEND SCREEN ================= -->
+  <div id="addModal" class="fixed inset-0 bg-[#08090D] z-50 hidden flex flex-col justify-between p-5 pt-7 pb-6 select-none">
+    
+    <!-- Top Action Row -->
+    <div class="flex justify-between items-center">
+      <button onclick="closeAddModal()" class="w-10 h-10 rounded-full bg-surface/50 flex items-center justify-center text-zinc-400 active:scale-90 transition-transform">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
 
-      <!-- Display -->
-      <div class="py-2 text-right">
-        <div id="calcExpr" class="text-xs text-zinc-500 h-4 font-mono pr-1"></div>
-        <div class="flex items-baseline justify-end gap-1">
-          <span class="text-2xl font-black text-violet-400">₹</span>
-          <input type="text" id="calcDisplay" readonly value="0" class="bg-transparent text-right text-5xl font-black text-white w-full focus:outline-none tracking-tight">
-        </div>
-      </div>
-
-      <!-- Payment Mode Toggle -->
-      <div class="grid grid-cols-2 gap-2 mb-2.5">
-        <button type="button" id="modeUPI" onclick="setMode('UPI')" class="py-2.5 rounded-2xl text-xs font-bold bg-violet-600/20 text-violet-300 border border-violet-500/50">
-          ⚡ UPI / Online
+      <!-- Payment Mode Toggle (Slice Pill Style) -->
+      <div class="flex bg-surface/60 p-1 rounded-2xl border border-white/5">
+        <button type="button" id="modeUPI" onclick="setMode('UPI')" class="px-4 py-1.5 rounded-xl text-xs font-bold bg-violet-600 text-white shadow-md shadow-violet-900/40 transition-all">
+          ⚡ UPI
         </button>
-        <button type="button" id="modeCash" onclick="setMode('Cash')" class="py-2.5 rounded-2xl text-xs font-bold bg-surface text-zinc-400 border border-transparent">
+        <button type="button" id="modeCash" onclick="setMode('Cash')" class="px-4 py-1.5 rounded-xl text-xs font-bold text-zinc-400 transition-all">
           💵 Cash
         </button>
       </div>
-
-      <input type="text" id="txNote" placeholder="What was this for? (Optional)" class="w-full bg-surface rounded-xl px-3.5 py-2.5 text-xs text-white mb-2.5 focus:outline-none focus:ring-1 focus:ring-violet-500 placeholder-zinc-500">
-
-      <!-- Dynamic Top Chips -->
-      <div class="mb-3">
-        <div class="flex items-center gap-1.5 overflow-x-auto hide-scrollbar py-1" id="frequentChipsContainer"></div>
-      </div>
-
-      <!-- Smooth Touch Numeric Keypad -->
-      <div class="grid grid-cols-4 gap-2 mb-3 text-center">
-        <button type="button" onclick="pressCalc('7')" class="keypad-btn py-3 rounded-2xl text-2xl font-bold text-zinc-100 bg-surface/30">7</button>
-        <button type="button" onclick="pressCalc('8')" class="keypad-btn py-3 rounded-2xl text-2xl font-bold text-zinc-100 bg-surface/30">8</button>
-        <button type="button" onclick="pressCalc('9')" class="keypad-btn py-3 rounded-2xl text-2xl font-bold text-zinc-100 bg-surface/30">9</button>
-        <button type="button" onclick="pressCalc('/')" class="keypad-op py-3 rounded-2xl text-xl font-black text-violet-400 bg-violet-950/20">÷</button>
-
-        <button type="button" onclick="pressCalc('4')" class="keypad-btn py-3 rounded-2xl text-2xl font-bold text-zinc-100 bg-surface/30">4</button>
-        <button type="button" onclick="pressCalc('5')" class="keypad-btn py-3 rounded-2xl text-2xl font-bold text-zinc-100 bg-surface/30">5</button>
-        <button type="button" onclick="pressCalc('6')" class="keypad-btn py-3 rounded-2xl text-2xl font-bold text-zinc-100 bg-surface/30">6</button>
-        <button type="button" onclick="pressCalc('*')" class="keypad-op py-3 rounded-2xl text-xl font-black text-violet-400 bg-violet-950/20">×</button>
-
-        <button type="button" onclick="pressCalc('1')" class="keypad-btn py-3 rounded-2xl text-2xl font-bold text-zinc-100 bg-surface/30">1</button>
-        <button type="button" onclick="pressCalc('2')" class="keypad-btn py-3 rounded-2xl text-2xl font-bold text-zinc-100 bg-surface/30">2</button>
-        <button type="button" onclick="pressCalc('3')" class="keypad-btn py-3 rounded-2xl text-2xl font-bold text-zinc-100 bg-surface/30">3</button>
-        <button type="button" onclick="pressCalc('-')" class="keypad-op py-3 rounded-2xl text-xl font-black text-violet-400 bg-violet-950/20">−</button>
-
-        <button type="button" onclick="pressCalc('.')" class="keypad-btn py-3 rounded-2xl text-2xl font-bold text-zinc-300 bg-surface/30">.</button>
-        <button type="button" onclick="pressCalc('0')" class="keypad-btn py-3 rounded-2xl text-2xl font-bold text-zinc-100 bg-surface/30">0</button>
-        <button type="button" onclick="pressCalc('BACK')" class="keypad-btn py-3 rounded-2xl text-lg font-bold text-zinc-400 bg-surface/30">⌫</button>
-        <button type="button" onclick="pressCalc('+')" class="keypad-op py-3 rounded-2xl text-xl font-black text-violet-400 bg-violet-950/20">+</button>
-      </div>
-
-      <button type="button" onclick="saveTransaction()" class="w-full py-3.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-extrabold rounded-2xl text-base shadow-xl shadow-violet-900/50 active:scale-[0.98] transition-transform">
-        Deduct & Save Spend
-      </button>
-
     </div>
+
+    <!-- Center Display Area (Pure Minimalist Giant Amount) -->
+    <div class="flex flex-col items-center justify-center my-auto py-2">
+      <div id="calcExpr" class="text-sm font-semibold text-zinc-500 h-6 mb-1 tracking-wider"></div>
+      <div class="flex items-center justify-center">
+        <span class="text-4xl md:text-5xl font-black text-violet-400 mr-1.5">₹</span>
+        <span id="calcDisplay" class="text-6xl md:text-7xl font-black text-white tracking-tight">0</span>
+      </div>
+
+      <!-- Quick Note / Description Input (Under Amount) -->
+      <div class="w-full max-w-xs mt-3">
+        <input type="text" id="txNote" placeholder="Tap to add a note..." 
+               class="w-full bg-transparent text-center text-sm font-medium text-zinc-300 placeholder-zinc-600 focus:outline-none border-b border-white/5 focus:border-violet-500/50 pb-1.5 transition-colors">
+      </div>
+
+      <!-- Category Selector Pill -->
+      <div class="mt-4 flex items-center gap-2 overflow-x-auto hide-scrollbar max-w-full py-1" id="frequentChipsContainer">
+        <!-- Injected chips -->
+      </div>
+    </div>
+
+    <!-- Bottom Half: True Borderless Clean Slice Keypad -->
+    <div class="w-full max-w-sm mx-auto">
+      <div class="grid grid-cols-4 gap-y-3 gap-x-2 text-center select-none">
+        <!-- Row 1 -->
+        <button type="button" onclick="pressCalc('7')" class="slice-key h-16 text-3xl font-medium text-white">7</button>
+        <button type="button" onclick="pressCalc('8')" class="slice-key h-16 text-3xl font-medium text-white">8</button>
+        <button type="button" onclick="pressCalc('9')" class="slice-key h-16 text-3xl font-medium text-white">9</button>
+        <button type="button" onclick="pressCalc('/')" class="slice-key slice-operator h-16 text-2xl font-bold text-violet-400">÷</button>
+
+        <!-- Row 2 -->
+        <button type="button" onclick="pressCalc('4')" class="slice-key h-16 text-3xl font-medium text-white">4</button>
+        <button type="button" onclick="pressCalc('5')" class="slice-key h-16 text-3xl font-medium text-white">5</button>
+        <button type="button" onclick="pressCalc('6')" class="slice-key h-16 text-3xl font-medium text-white">6</button>
+        <button type="button" onclick="pressCalc('*')" class="slice-key slice-operator h-16 text-2xl font-bold text-violet-400">×</button>
+
+        <!-- Row 3 -->
+        <button type="button" onclick="pressCalc('1')" class="slice-key h-16 text-3xl font-medium text-white">1</button>
+        <button type="button" onclick="pressCalc('2')" class="slice-key h-16 text-3xl font-medium text-white">2</button>
+        <button type="button" onclick="pressCalc('3')" class="slice-key h-16 text-3xl font-medium text-white">3</button>
+        <button type="button" onclick="pressCalc('-')" class="slice-key slice-operator h-16 text-2xl font-bold text-violet-400">−</button>
+
+        <!-- Row 4 -->
+        <button type="button" onclick="pressCalc('.')" class="slice-key h-16 text-3xl font-black text-zinc-400">.</button>
+        <button type="button" onclick="pressCalc('0')" class="slice-key h-16 text-3xl font-medium text-white">0</button>
+        <button type="button" onclick="pressCalc('BACK')" class="slice-key h-16 text-zinc-400 active:text-white flex items-center justify-center">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.5-6.5a2 2 0 011.414-.586H20a2 2 0 012 2v10a2 2 0 01-2 2h-10.086a2 2 0 01-1.414-.586L3 12z"/></svg>
+        </button>
+        <button type="button" onclick="pressCalc('+')" class="slice-key slice-operator h-16 text-2xl font-bold text-violet-400">+</button>
+      </div>
+
+      <!-- Big Seamless Confirm Spend Button -->
+      <button type="button" onclick="saveTransaction()" class="w-full mt-4 py-4 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 text-white font-black rounded-3xl text-base shadow-xl shadow-violet-950/60 active:scale-[0.98] transition-transform">
+        Deduct & Confirm Spend
+      </button>
+    </div>
+
   </div>
 
   <!-- ================= UPDATE WALLET / CASH MODAL ================= -->
@@ -318,9 +338,9 @@
       renderBalances();
     }
 
-    // ================= ZERO-LAG ENGINE =================
+    // ================= SLICE KEYPAD LOGIC =================
     function updateKeypadUI() {
-      document.getElementById('calcDisplay').value = currentInput;
+      document.getElementById('calcDisplay').innerText = currentInput;
       document.getElementById('calcExpr').innerText = calcExpression;
     }
 
@@ -363,7 +383,7 @@
         currentInput = val;
         isNewNumber = false;
       } else {
-        if (currentInput.length < 9) { // limit overflow
+        if (currentInput.length < 9) {
           currentInput += val;
         }
       }
@@ -387,6 +407,7 @@
       currentInput = '0';
       calcExpression = '';
       isNewNumber = true;
+      document.getElementById('txNote').value = '';
       updateKeypadUI();
       renderCategoryChips();
     }
@@ -400,11 +421,11 @@
       const upi = document.getElementById('modeUPI');
       const cash = document.getElementById('modeCash');
       if (mode === 'UPI') {
-        upi.className = "py-2.5 rounded-2xl text-xs font-bold bg-violet-600/20 text-violet-300 border border-violet-500/50";
-        cash.className = "py-2.5 rounded-2xl text-xs font-bold bg-surface text-zinc-400 border border-transparent";
+        upi.className = "px-4 py-1.5 rounded-xl text-xs font-bold bg-violet-600 text-white shadow-md shadow-violet-900/40 transition-all";
+        cash.className = "px-4 py-1.5 rounded-xl text-xs font-bold text-zinc-400 transition-all";
       } else {
-        cash.className = "py-2.5 rounded-2xl text-xs font-bold bg-violet-600/20 text-violet-300 border border-violet-500/50";
-        upi.className = "py-2.5 rounded-2xl text-xs font-bold bg-surface text-zinc-400 border border-transparent";
+        cash.className = "px-4 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white shadow-md shadow-emerald-900/40 transition-all";
+        upi.className = "px-4 py-1.5 rounded-xl text-xs font-bold text-zinc-400 transition-all";
       }
     }
 
@@ -418,32 +439,31 @@
     function renderCategoryChips() {
       const container = document.getElementById('frequentChipsContainer');
       const sorted = getTopCategories();
-      const top4 = sorted.slice(0, 4);
+      const top3 = sorted.slice(0, 3);
 
-      if (!top4.find(c => c.name === selectedCategory)) {
+      if (!top3.find(c => c.name === selectedCategory)) {
         const found = CATEGORIES.find(c => c.name === selectedCategory);
-        if (found) top4.unshift(found);
+        if (found) top3.unshift(found);
       }
 
-      let html = top4.map(cat => `
+      let html = top3.map(cat => `
         <button type="button" onclick="pickCategory('${cat.name}')" 
-          class="px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+          class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
             selectedCategory === cat.name 
             ? 'bg-violet-600 text-white shadow-md shadow-violet-900/50' 
-            : 'bg-surface text-zinc-400'
+            : 'bg-surface/80 text-zinc-400 border border-white/5'
           }">
           ${cat.icon} ${cat.name}
         </button>
       `).join('');
 
       html += `
-        <button type="button" onclick="openCategorySheet()" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-surface text-violet-400 whitespace-nowrap active:scale-95">
+        <button type="button" onclick="openCategorySheet()" class="px-3.5 py-1.5 rounded-full text-xs font-bold bg-surface/80 text-violet-400 border border-violet-500/20 whitespace-nowrap active:scale-95">
           + All
         </button>
       `;
 
       container.innerHTML = html;
-      document.getElementById('activeCategoryTag').innerText = selectedCategory;
     }
 
     function pickCategory(name) {
@@ -488,7 +508,6 @@
       transactions.unshift(tx);
       localStorage.setItem('spends_data', JSON.stringify(transactions));
       closeAddModal();
-      document.getElementById('txNote').value = '';
       renderAll();
     }
 
